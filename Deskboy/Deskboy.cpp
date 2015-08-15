@@ -87,6 +87,7 @@ public:
 		hwndNextViewer = SetClipboardViewer(hWnd);
 		hList = CreateWindowW(L"ListBox", L"Listbox", WS_CHILD | LBS_NOTIFY,
 			CW_USEDEFAULT, 0, 600, 600, hWnd, (HMENU)ID_LIST, hInst, NULL);
+		
 		//SendMessage(hList, LB_ADDSTRING, 0, (LPARAM)L"Text");
 		//DefProc = (TDefProc)SetWindowLongPtr(hList, GWLP_WNDPROC, (LONG)&WndProc);
 		ShowWindow(hList, SW_HIDE);
