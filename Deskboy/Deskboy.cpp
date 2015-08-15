@@ -12,15 +12,180 @@
 #define MAX_SIZE 4096*1024
 
 #define MAX_LOADSTRING 100
+#define ID_LIST 12 
 
 // Global Variables:
 HINSTANCE hInst;                                // current instance
 WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
 WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
-std::vector<std::wstring> buffer;
+class DeskboyStatic
+{
+	std::vector<std::wstring> buffer;
 
-std::wstring current;
+	std::wstring current;
+	UINT uFormat = 0;
+	HWND hwndNextViewer = NULL;
+	bool ignore = true;
+	HWND hList = nullptr;
+public:
+	LRESULT onSelChange(HWND hWnd,UINT message,WPARAM wParam,LPARAM lParam)
+	{
 
+		int index = SendMessage(hList, LB_GETCURSEL, 0, 0);
+		if (index >= 0 && index < (int)buffer.size())
+		{
+			//SetWindowText(hWnd, L"Success");
+			current = buffer[index];
+			HGLOBAL hGlobal = GlobalAlloc(GHND, (current.size() + 1) << 1);
+			void * p = GlobalLock(hGlobal);
+			wmemcpy((wchar_t*)p, current.c_str(), current.size() + 1);
+			ignore = true;
+			if (OpenClipboard(hWnd))
+			{
+				HANDLE hClip = SetClipboardData(CF_UNICODETEXT, hGlobal);
+				if (!hClip)
+					MessageBox(NULL, L"cannot write to clipboard", L"Deskboy", MB_OK);
+				GlobalUnlock(hGlobal);
+
+				CloseClipboard();
+			}
+			else
+			{
+				MessageBox(NULL, L"cannot open clipboard", L"Deskboy", MB_OK);
+			}
+
+		}
+		return 0;
+	}
+	LRESULT onHotKey(HWND hWnd,UINT message,WPARAM wParam,LPARAM lParam)
+	{
+		if (wParam == 1)
+		{
+			if (!IsWindowVisible(hWnd))
+			{
+				ShowWindow(hWnd, SW_SHOW);
+				ShowWindow(hList, SW_SHOW);
+				BringWindowToTop(hWnd);
+
+			}
+			else
+			{
+				ShowWindow(hWnd, SW_HIDE);
+				ShowWindow(hList, SW_HIDE);
+			}
+		}
+		Beep(440, 100);
+		return 0;
+
+	}
+	LRESULT onCreate(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+	{
+		// Add the window to the clipboard viewer chain. 
+		RegisterHotKey(hWnd, 1, MOD_CONTROL | MOD_ALT, VK_RETURN);
+		RegisterHotKey(hWnd, 2, MOD_CONTROL | MOD_ALT, VK_RSHIFT);
+
+		hwndNextViewer = SetClipboardViewer(hWnd);
+		hList = CreateWindowW(L"ListBox", L"Listbox", WS_CHILD | LBS_NOTIFY,
+			CW_USEDEFAULT, 0, 600, 600, hWnd, (HMENU)ID_LIST, hInst, NULL);
+		//SendMessage(hList, LB_ADDSTRING, 0, (LPARAM)L"Text");
+		//DefProc = (TDefProc)SetWindowLongPtr(hList, GWLP_WNDPROC, (LONG)&WndProc);
+		ShowWindow(hList, SW_HIDE);
+		//ShowWindow(hWnd, SW_HIDE);
+		return 0;
+
+	}
+	LRESULT onChangeCBChain(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+	{
+		// If the next window is closing, repair the chain. 
+
+		if ((HWND)wParam == hwndNextViewer)
+			hwndNextViewer = (HWND)lParam;
+
+		// Otherwise, pass the message to the next link. 
+
+		else if (hwndNextViewer != NULL)
+			SendMessage(hwndNextViewer, message, wParam, lParam);
+		return 0;
+
+
+	}
+	LRESULT onDestroy(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+	{
+		ChangeClipboardChain(hWnd, hwndNextViewer);
+		PostQuitMessage(0);
+		return 0;
+	}
+	LRESULT onDrawClipBoard(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+	{
+		if (ignore)
+		{
+			ignore = false;
+		}
+		else if (OpenClipboard(hWnd))
+		{
+			HGLOBAL hglb = GetClipboardData(CF_UNICODETEXT);
+			if (hglb != nullptr)
+			{
+				LPWSTR lpstr = (LPWSTR)GlobalLock(hglb);
+				save(lpstr);
+				std::wstring str = lpstr;
+				buffer.push_back(str);
+				if (wcslen(lpstr) > 50)
+					lpstr[50] = 0;
+				wchar_t * p = lpstr;
+				do
+				{
+					p = wcschr(p, '\n');
+					if (p)
+					{
+						*p = L'§';
+						p++;
+					}
+				} while (p);
+				SendMessage(hList, LB_ADDSTRING, 0, (LPARAM)lpstr);
+
+				GlobalUnlock(hglb);
+			}
+			CloseClipboard();
+		}
+
+
+		// Pass the message to the next window in clipboard 
+		// viewer chain. 
+		//InvalidateRect(hWnd, NULL, TRUE);
+		//UpdateWindow(hWnd);
+		SendMessage(hwndNextViewer, message, wParam, lParam);
+		return 0;
+	}
+	void save(LPCWSTR lp)
+	{
+
+		wchar_t key[51];
+		int len = wcslen(lp);
+		if (len > 50)
+		{
+			wcsncpy_s(key, 51, lp, 50);
+			key[50] = 0;
+		}
+		else
+			wcscpy_s(key, 50, lp);
+		FILE * fp;
+		int magic = 0xfedec0de;
+		int end = 0xeeddeedd;
+
+		if (!_wfopen_s(&fp, L"Clipboard.clp", L"ab"))
+		{
+			len <<= 1;
+			fwrite(&magic, sizeof(int), 1, fp);
+			fwrite(&len, sizeof(int), 1, fp);
+			fwrite(lp, len, 1, fp);
+			fwrite(&end, sizeof(int), 1, fp);
+			fclose(fp);
+		}
+	}
+
+};
+DeskboyStatic deskboy;
 // Forward declarations of functions included in this code module:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
@@ -93,32 +258,6 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 
     return RegisterClassExW(&wcex);
 }
-void save(LPCWSTR lp)
-{
-
-	wchar_t key[51];
-	int len = wcslen(lp);
-	if (len > 50)
-	{
-		wcsncpy_s(key, 51,lp, 50);
-		key[50] = 0;
-	}
-	else
-		wcscpy_s(key, 50, lp);
-	FILE * fp;
-	int magic = 0xfedec0de;
-	int end = 0xeeddeedd;
-
-	if (!_wfopen_s(&fp, L"Clipboard.clp", L"ab"))
-	{
-		len <<= 1;
-		fwrite(&magic, sizeof(int), 1, fp);
-		fwrite(&len, sizeof(int), 1, fp);
-		fwrite(lp, len, 1, fp);
-		fwrite(&end, sizeof(int), 1, fp);
-		fclose(fp);
-	}
-}
 //
 //   FUNCTION: InitInstance(HINSTANCE, int)
 //
@@ -146,11 +285,6 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
    return TRUE;
 }
-UINT uFormat = 0;
-HWND hwndNextViewer = NULL;
-bool ignore = true;
-HWND hList = nullptr;
-#define ID_LIST 12 
 //
 //  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
 //
@@ -163,12 +297,12 @@ HWND hList = nullptr;
 //
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    switch (message)
-    {
-	 case WM_PARENTNOTIFY:
-	 case WM_NOTIFY:
+	switch (message)
+	{
+	case WM_PARENTNOTIFY:
+	case WM_NOTIFY:
 		 break;
-    case WM_COMMAND:
+	case WM_COMMAND:
         {
             int wmId = LOWORD(wParam);
 				int high = HIWORD(wParam);
@@ -177,21 +311,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				{
 				case LBN_DBLCLK:
 				case LBN_SELCHANGE:
-					index = SendMessage(hList, LB_GETCURSEL, 0, 0);
-					if (index >= 0 && index < (int)buffer.size())
-					{
-						current = buffer[index];
-						HGLOBAL hGlobal = GlobalAlloc(GHND, (current.size() + 1) << 1);
-						void * p = GlobalLock(hGlobal);
-						wmemcpy((wchar_t*)p, current.c_str(), current.size() + 1);
-						ignore = true;
-						OpenClipboard(hWnd);
-						HANDLE hClip = SetClipboardData(CF_UNICODETEXT, hGlobal);
-						GlobalUnlock(hGlobal);
-
-						CloseClipboard();
-
-					}
+					deskboy.onSelChange(hWnd, message, wParam,lParam);
 					break;
 				}
 
@@ -238,95 +358,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		 break;
 	 }
 	 case WM_HOTKEY:
-		 if (wParam == 1)
-		 {
-			 if (!IsWindowVisible(hWnd))
-			 {
-				 ShowWindow(hWnd, SW_SHOW);
-				 ShowWindow(hList, SW_SHOW);
-				 BringWindowToTop(hWnd);
-
-			 }
-			 else
-			 {
-				 ShowWindow(hWnd, SW_HIDE);
-				 ShowWindow(hList, SW_HIDE);
-			 }
-		 }
-		 Beep(440, 100);
+		 deskboy.onHotKey(hWnd, message, wParam, lParam);
 		 break;
 	 case WM_CREATE:
-
-		 // Add the window to the clipboard viewer chain. 
-		 RegisterHotKey(hWnd, 1, MOD_CONTROL | MOD_ALT,VK_RETURN );
-		 RegisterHotKey(hWnd, 2, MOD_CONTROL | MOD_ALT, VK_RSHIFT);
-
-		 hwndNextViewer = SetClipboardViewer(hWnd);
-		 hList = CreateWindowW(L"ListBox", L"Listbox", WS_CHILD|LBS_NOTIFY, 
-				CW_USEDEFAULT, 0, 600, 600, hWnd, (HMENU)ID_LIST, hInst, NULL);
-		 //SendMessage(hList, LB_ADDSTRING, 0, (LPARAM)L"Text");
-		 //DefProc = (TDefProc)SetWindowLongPtr(hList, GWLP_WNDPROC, (LONG)&WndProc);
-		 ShowWindow(hList, SW_HIDE);
-		 //ShowWindow(hWnd, SW_HIDE);
+		 deskboy.onCreate(hWnd, message, wParam, lParam);
 		 break;
 
 	 case WM_CHANGECBCHAIN:
-
-		 // If the next window is closing, repair the chain. 
-
-		 if ((HWND)wParam == hwndNextViewer)
-			 hwndNextViewer = (HWND)lParam;
-
-		 // Otherwise, pass the message to the next link. 
-
-		 else if (hwndNextViewer != NULL)
-			 SendMessage(hwndNextViewer, message, wParam, lParam);
-
+		 deskboy.onChangeCBChain(hWnd, message, wParam, lParam);
 		 break;
 
 	 case WM_DESTROY:
-		 ChangeClipboardChain(hWnd, hwndNextViewer);
-		 PostQuitMessage(0);
+		 deskboy.onDestroy(hWnd, message, wParam, lParam);
 		 break;
+	 case WM_DESTROYCLIPBOARD:
 
-	 case WM_DRAWCLIPBOARD:  // clipboard contents changed. 
-
-									 // Update the window by using Auto clipboard format. 
-		 if (ignore)
-		 {
-			 ignore = false;
-
-		 }
-		 else if (OpenClipboard(hWnd))
-		 {
-			 HGLOBAL hglb = GetClipboardData(CF_UNICODETEXT);
-			 LPWSTR lpstr = (LPWSTR)GlobalLock(hglb);
-			 save(lpstr);
-			 std::wstring str = lpstr;
-			 buffer.push_back(str);
-			 if (wcslen(lpstr) > 50)
-				 lpstr[50] = 0;
-			 wchar_t * p = nullptr;
-			 do
-			 {
-				 p = wcschr(lpstr, '\n');
-				 if (p)
-				 {
-					 *p = L'§';
-					 p++;
-				 }
-			 } while (p);
-			 SendMessage(hList, LB_ADDSTRING, 0, (LPARAM)lpstr);
-
-			 GlobalUnlock(hglb);
-			 CloseClipboard();
-		 }
-
-		 // Pass the message to the next window in clipboard 
-		 // viewer chain. 
-		 //InvalidateRect(hWnd, NULL, TRUE);
-		 //UpdateWindow(hWnd);
-		 SendMessage(hwndNextViewer, message, wParam, lParam);
+		break;
+	case WM_DRAWCLIPBOARD:  // clipboard contents changed. 
+		deskboy.onDrawClipBoard(hWnd, message, wParam, lParam);
 		 break;
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);
