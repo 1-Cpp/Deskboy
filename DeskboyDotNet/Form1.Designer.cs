@@ -64,6 +64,11 @@
 			this.checkBoxRegistry = new System.Windows.Forms.CheckBox();
 			this.saveFileDialog = new System.Windows.Forms.SaveFileDialog();
 			this.buttonNext = new System.Windows.Forms.Button();
+			this.listTMain = new System.Windows.Forms.ListBox();
+			this.textTag = new System.Windows.Forms.TextBox();
+			this.buttonAddDel = new System.Windows.Forms.Button();
+			this.buttonSearch = new System.Windows.Forms.Button();
+			this.buttonNew = new System.Windows.Forms.Button();
 			this.tabControl.SuspendLayout();
 			this.tabPageEdit.SuspendLayout();
 			this.tabPageClipBoard.SuspendLayout();
@@ -84,6 +89,7 @@
 			this.tabControl.SelectedIndex = 0;
 			this.tabControl.Size = new System.Drawing.Size(775, 365);
 			this.tabControl.TabIndex = 0;
+			this.tabControl.Selected += new System.Windows.Forms.TabControlEventHandler(this.tabControl_Selected);
 			// 
 			// tabPageEdit
 			// 
@@ -118,7 +124,7 @@
 			// 
 			// buttonSave
 			// 
-			this.buttonSave.Location = new System.Drawing.Point(782, 22);
+			this.buttonSave.Location = new System.Drawing.Point(782, 68);
 			this.buttonSave.Name = "buttonSave";
 			this.buttonSave.Size = new System.Drawing.Size(90, 27);
 			this.buttonSave.TabIndex = 1;
@@ -150,6 +156,9 @@
 			// 
 			// tabPageTask
 			// 
+			this.tabPageTask.Controls.Add(this.buttonAddDel);
+			this.tabPageTask.Controls.Add(this.textTag);
+			this.tabPageTask.Controls.Add(this.listTMain);
 			this.tabPageTask.Controls.Add(this.listTaskState);
 			this.tabPageTask.Controls.Add(this.textTaskName);
 			this.tabPageTask.Controls.Add(this.comboTCategory);
@@ -188,13 +197,14 @@
 			this.comboTCategory.Name = "comboTCategory";
 			this.comboTCategory.Size = new System.Drawing.Size(274, 28);
 			this.comboTCategory.TabIndex = 3;
+			this.comboTCategory.DropDown += new System.EventHandler(this.comboTCategory_DropDown);
 			// 
 			// textTaskDesc
 			// 
 			this.textTaskDesc.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-			this.textTaskDesc.Location = new System.Drawing.Point(6, 92);
+			this.textTaskDesc.Location = new System.Drawing.Point(6, 160);
 			this.textTaskDesc.Multiline = true;
 			this.textTaskDesc.Name = "textTaskDesc";
 			this.textTaskDesc.Size = new System.Drawing.Size(755, 112);
@@ -222,9 +232,9 @@
 			// textTaskName
 			// 
 			this.textTaskName.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.textTaskName.Location = new System.Drawing.Point(7, 45);
+			this.textTaskName.Location = new System.Drawing.Point(7, 106);
 			this.textTaskName.Name = "textTaskName";
-			this.textTaskName.Size = new System.Drawing.Size(478, 29);
+			this.textTaskName.Size = new System.Drawing.Size(754, 29);
 			this.textTaskName.TabIndex = 4;
 			// 
 			// listTaskState
@@ -233,12 +243,12 @@
 			this.listTaskState.Items.AddRange(new object[] {
             "OPEN",
             "INQUIRY",
-            "PROCEEDING",
-            "ALMOST DONE",
+            "ONGOING",
+            "MAINLY DONE",
             "DONE"});
 			this.listTaskState.Location = new System.Drawing.Point(529, 6);
 			this.listTaskState.Name = "listTaskState";
-			this.listTaskState.Size = new System.Drawing.Size(232, 69);
+			this.listTaskState.Size = new System.Drawing.Size(232, 82);
 			this.listTaskState.TabIndex = 5;
 			// 
 			// tabPageConfigure
@@ -436,7 +446,7 @@
 			// 
 			// buttonNext
 			// 
-			this.buttonNext.Location = new System.Drawing.Point(782, 71);
+			this.buttonNext.Location = new System.Drawing.Point(782, 117);
 			this.buttonNext.Name = "buttonNext";
 			this.buttonNext.Size = new System.Drawing.Size(90, 27);
 			this.buttonNext.TabIndex = 2;
@@ -444,11 +454,64 @@
 			this.buttonNext.UseVisualStyleBackColor = true;
 			this.buttonNext.Click += new System.EventHandler(this.buttonNext_Click);
 			// 
+			// listTMain
+			// 
+			this.listTMain.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.listTMain.FormattingEnabled = true;
+			this.listTMain.ItemHeight = 20;
+			this.listTMain.Location = new System.Drawing.Point(296, 6);
+			this.listTMain.MultiColumn = true;
+			this.listTMain.Name = "listTMain";
+			this.listTMain.Size = new System.Drawing.Size(214, 84);
+			this.listTMain.TabIndex = 7;
+			// 
+			// textTag
+			// 
+			this.textTag.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.textTag.Location = new System.Drawing.Point(7, 49);
+			this.textTag.Name = "textTag";
+			this.textTag.Size = new System.Drawing.Size(178, 26);
+			this.textTag.TabIndex = 8;
+			this.textTag.TextChanged += new System.EventHandler(this.textTag_TextChanged);
+			// 
+			// buttonAddDel
+			// 
+			this.buttonAddDel.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.buttonAddDel.Location = new System.Drawing.Point(206, 49);
+			this.buttonAddDel.Name = "buttonAddDel";
+			this.buttonAddDel.Size = new System.Drawing.Size(75, 27);
+			this.buttonAddDel.TabIndex = 9;
+			this.buttonAddDel.Text = "<<";
+			this.buttonAddDel.UseVisualStyleBackColor = true;
+			this.buttonAddDel.Click += new System.EventHandler(this.buttonAddDel_Click);
+			// 
+			// buttonSearch
+			// 
+			this.buttonSearch.Location = new System.Drawing.Point(782, 163);
+			this.buttonSearch.Name = "buttonSearch";
+			this.buttonSearch.Size = new System.Drawing.Size(90, 27);
+			this.buttonSearch.TabIndex = 3;
+			this.buttonSearch.Text = "Search";
+			this.buttonSearch.UseVisualStyleBackColor = true;
+			this.buttonSearch.Click += new System.EventHandler(this.buttonSearch_Click);
+			// 
+			// buttonNew
+			// 
+			this.buttonNew.Location = new System.Drawing.Point(782, 22);
+			this.buttonNew.Name = "buttonNew";
+			this.buttonNew.Size = new System.Drawing.Size(90, 27);
+			this.buttonNew.TabIndex = 4;
+			this.buttonNew.Text = "New";
+			this.buttonNew.UseVisualStyleBackColor = true;
+			this.buttonNew.Click += new System.EventHandler(this.buttonNew_Click);
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(884, 358);
+			this.Controls.Add(this.buttonNew);
+			this.Controls.Add(this.buttonSearch);
 			this.Controls.Add(this.buttonNext);
 			this.Controls.Add(this.buttonSave);
 			this.Controls.Add(this.tabControl);
@@ -506,6 +569,11 @@
 		private System.Windows.Forms.OpenFileDialog openFileDialog;
 		private System.Windows.Forms.SaveFileDialog saveFileDialog;
 		private System.Windows.Forms.Button buttonNext;
+		private System.Windows.Forms.Button buttonAddDel;
+		private System.Windows.Forms.TextBox textTag;
+		private System.Windows.Forms.ListBox listTMain;
+		private System.Windows.Forms.Button buttonSearch;
+		private System.Windows.Forms.Button buttonNew;
 	}
 }
 
