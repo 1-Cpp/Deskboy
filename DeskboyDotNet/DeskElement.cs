@@ -20,7 +20,11 @@ namespace DeskboyDotNet
 				Category = value;
 			}
 		}
-		public virtual void load(BoyRecord record)
+		public virtual void save()
+		{
+
+		}
+      public virtual void load(BoyRecord record)
 		{
 			if(record.dict.ContainsKey("cat"))
 				category = record.dict["cat"];

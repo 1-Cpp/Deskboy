@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <string>
 #include <vector>
-//#include <map>
+#include "Listener.h"
 
 #define MAX_BUFFERS 128
 #define MAX_SIZE 4096*1024
@@ -27,6 +27,7 @@ class DeskboyStatic
 	HWND hwndNextViewer = NULL;
 	bool ignore = true;
 	HWND hList = nullptr;
+	Listener listener;
 public:
 	LRESULT onSelChange(HWND hWnd,UINT message,WPARAM wParam,LPARAM lParam)
 	{
@@ -82,8 +83,9 @@ public:
 	{
 		// Add the window to the clipboard viewer chain. 
 		RegisterHotKey(hWnd, 1, MOD_CONTROL | MOD_ALT, VK_RETURN);
-		RegisterHotKey(hWnd, 2, MOD_CONTROL | MOD_ALT, VK_RSHIFT);
-
+		RegisterHotKey(hWnd, 2, MOD_CONTROL | MOD_ALT, VK_UP);
+		if (listener.prepare())
+			listener.start();
 		hwndNextViewer = SetClipboardViewer(hWnd);
 		hList = CreateWindowW(L"ListBox", L"Listbox", WS_CHILD | LBS_NOTIFY,
 			CW_USEDEFAULT, 0, 600, 600, hWnd, (HMENU)ID_LIST, hInst, NULL);
