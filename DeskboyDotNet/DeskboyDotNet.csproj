@@ -18,7 +18,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>C:\Debug\%24%28SolutionDir%29\%24%28ProjectDir%29\</OutputPath>
+    <OutputPath>C:\%24%28Configuration%29\%24%28SolutionName%29\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -27,7 +27,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>C:\Release\%24%28SolutionDir%29\%24%28ProjectDir%29\</OutputPath>
+    <OutputPath>C:\%24%28Configuration%29\%24%28SolutionName%29\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
