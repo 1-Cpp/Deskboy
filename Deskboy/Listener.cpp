@@ -21,11 +21,21 @@ bool Listener::prepare()
 	WSAStartup(word, &wsaData);
 	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = PF_INET;
-	addr.sin_port = MAKEWORD(0, 8088);
+	addr.sin_port = htons(8088);
 	socket = ::socket(AF_INET, SOCK_STREAM,IPPROTO_TCP );
-	
-	bind(socket, (sockaddr*)&addr,sizeof(addr));
+	if (socket == SOCKET_ERROR)
+	{
+		OutputDebugStringA("socket error\n");
+		return false;
+	}
+	int ret = bind(socket, (sockaddr*)&addr,sizeof(addr));
+	if (ret == SOCKET_ERROR)
+	{
+		OutputDebugStringA("bind error\n");
+		return false;
+	}
 	listen(socket, 4);
+	OutputDebugStringA("listen success\n");
 	return true;
 }
 
@@ -39,7 +49,7 @@ bool Listener::run()
 	while ( (s = accept(socket, &sender, &size)) != SOCKET_ERROR)
 	{
 		unsigned long threadId = 0;
-		HttpClient * client = new HttpClient(s);
+		HttpClient * client = new HttpClient(data,s);
 		CreateThread(NULL, 0, &HttpClient::threadFunction, client, 0, &threadId);
 	}
 	DWORD dwErr = WSAGetLastError();

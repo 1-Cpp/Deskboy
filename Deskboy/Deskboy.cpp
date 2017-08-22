@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include "Listener.h"
+#include "DeskboyData.h"
 
 #define MAX_BUFFERS 128
 #define MAX_SIZE 4096*1024
@@ -20,23 +21,27 @@ WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
 WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
 class DeskboyStatic
 {
-	std::vector<std::wstring> buffer;
 
 	std::wstring current;
 	UINT uFormat = 0;
 	HWND hwndNextViewer = NULL;
 	bool ignore = true;
 	HWND hList = nullptr;
-	Listener listener;
+	DeskboyData data;
+	Listener * listener = nullptr;
 public:
+	DeskboyStatic()
+	{
+		listener = new Listener(data);
+	}
 	LRESULT onSelChange(HWND hWnd,UINT message,WPARAM wParam,LPARAM lParam)
 	{
 
 		int index = SendMessage(hList, LB_GETCURSEL, 0, 0);
-		if (index >= 0 && index < (int)buffer.size())
+		if (index >= 0 && index < (int)data.buffer.size())
 		{
 			//SetWindowText(hWnd, L"Success");
-			current = buffer[index];
+			current = data.buffer[index];
 			HGLOBAL hGlobal = GlobalAlloc(GHND, (current.size() + 1) << 1);
 			void * p = GlobalLock(hGlobal);
 			wmemcpy((wchar_t*)p, current.c_str(), current.size() + 1);
@@ -67,7 +72,7 @@ public:
 				ShowWindow(hWnd, SW_SHOW);
 				ShowWindow(hList, SW_SHOW);
 				BringWindowToTop(hWnd);
-
+				SetForegroundWindow(hWnd);
 			}
 			else
 			{
@@ -84,8 +89,8 @@ public:
 		// Add the window to the clipboard viewer chain. 
 		RegisterHotKey(hWnd, 1, MOD_CONTROL | MOD_ALT, VK_RETURN);
 		RegisterHotKey(hWnd, 2, MOD_CONTROL | MOD_ALT, VK_UP);
-		if (listener.prepare())
-			listener.start();
+		if (listener->prepare())
+			listener->start();
 		hwndNextViewer = SetClipboardViewer(hWnd);
 		hList = CreateWindowW(L"ListBox", L"Listbox", WS_CHILD | LBS_NOTIFY,
 			CW_USEDEFAULT, 0, 600, 600, hWnd, (HMENU)ID_LIST, hInst, NULL);
@@ -132,7 +137,7 @@ public:
 				LPWSTR lpstr = (LPWSTR)GlobalLock(hglb);
 				save(lpstr);
 				std::wstring str = lpstr;
-				buffer.push_back(str);
+				data.buffer.push_back(str);
 				if (wcslen(lpstr) > 50)
 					lpstr[50] = 0;
 				wchar_t * p = lpstr;

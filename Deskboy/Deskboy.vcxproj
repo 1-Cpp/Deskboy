@@ -147,6 +147,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Deskboy.h" />
+    <ClInclude Include="DeskboyData.h" />
     <ClInclude Include="HttpClient.h" />
     <ClInclude Include="Listener.h" />
     <ClInclude Include="Resource.h" />
@@ -155,6 +156,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Deskboy.cpp" />
+    <ClCompile Include="DeskboyData.cpp" />
     <ClCompile Include="HttpClient.cpp" />
     <ClCompile Include="Listener.cpp" />
     <ClCompile Include="stdafx.cpp">

@@ -1,15 +1,16 @@
 #pragma once
 
-
+#include "DeskboyData.h"
 class HttpClient
 {
 public:
 	unsigned int socket;
-	HttpClient()
+	DeskboyData & data;
+	HttpClient(DeskboyData& data): data(data)
 	{
 
 	}
-	HttpClient(unsigned int socket) : socket(socket)
+	HttpClient(DeskboyData& data,unsigned int socket) : socket(socket),data(data)
 	{
 
 	}
